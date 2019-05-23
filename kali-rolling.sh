@@ -1,22 +1,4 @@
 #!/bin/bash
-#-Metadata----------------------------------------------------#
-#  Filename: kali-rolling.sh             (Update: 2016-09-21) #
-#-Info--------------------------------------------------------#
-#  Personal post-install script for Kali Linux Rolling        #
-#-Author(s)---------------------------------------------------#
-#  g0tmilk ~ https://blog.g0tmi1k.com/                        #
-#-Operating System--------------------------------------------#
-#  Designed for: Kali Linux Rolling [x64] (VM - VMware)       #
-#     Tested on: Kali Linux 2016.2 x64/x84/full/light/mini/vm #
-#     Kali v1.x: https://g0tmi1k/os-scripts/master/kali1.sh   #
-#     Kali v2.x: https://g0tmi1k/os-scripts/master/kali2.sh   #
-#-Licence-----------------------------------------------------#
-#  MIT License ~ http://opensource.org/licenses/MIT           #
-#-Notes-------------------------------------------------------#
-#  Run as root straight after a clean install of Kali Rolling #
-#                             ---                             #
-#  You will need 25GB+ free HDD space before running.         #
-#                             ---                             #
 #  Command line arguments:                                    #
 #    -burp     = Automates configuring Burp Suite (Community) #
 #    -dns      = Use OpenDNS and locks permissions            #
@@ -33,16 +15,6 @@
 #             ** This script is meant for _ME_. **            #
 #         ** EDIT this to meet _YOUR_ requirements! **        #
 #-------------------------------------------------------------#
-
-
-if [ 1 -eq 0 ]; then    # This is never true, thus it acts as block comments ;)
-################################################################################
-### One liner - Grab the latest version and execute! ###########################
-################################################################################
-wget -qO kali-rolling.sh https://raw.github.com/g0tmi1k/os-scripts/master/kali-rolling.sh \
-  && bash kali-rolling.sh -burp -keyboard gb -timezone "Europe/London"
-################################################################################
-fi
 
 
 #-Defaults-------------------------------------------------------------#
@@ -149,33 +121,6 @@ fi
 ##### Fix display output for GUI programs (when connecting via SSH)
 export DISPLAY=:0.0
 export TERM=xterm
-
-
-##### Are we using GNOME?
-if [[ $(which gnome-shell) ]]; then
-  ##### RAM check
-  if [[ "$(free -m | grep -i Mem | awk '{print $2}')" < 2048 ]]; then
-    echo -e '\n '${RED}'[!]'${RESET}" ${RED}You have <= 2GB of RAM and using GNOME${RESET}" 1>&2
-    echo -e " ${YELLOW}[i]${RESET} ${YELLOW}Might want to use XFCE instead${RESET}..."
-    sleep 15s
-  fi
-
-
-  ##### Disable its auto notification package updater
-  (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Disabling GNOME's ${GREEN}notification package updater${RESET} service ~ in case it runs during this script"
-  export DISPLAY=:0.0
-  timeout 5 killall -w /usr/lib/apt/methods/http >/dev/null 2>&1
-
-
-  ##### Disable screensaver
-  (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Disabling ${GREEN}screensaver${RESET}"
-  xset s 0 0
-  xset s off
-  gsettings set org.gnome.desktop.session idle-delay 0
-else
-  echo -e "\n\n ${YELLOW}[i]${RESET} ${YELLOW}Skipping disabling package updater${RESET}..."
-fi
-
 
 ##### Check Internet access
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Checking ${GREEN}Internet access${RESET}"
@@ -418,48 +363,6 @@ if [[ $(dmidecode | grep -i virtual) ]]; then
 fi
 
 
-if [[ $(which gnome-shell) ]]; then
-  ##### Configure GNOME 3
-  (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Configuring ${GREEN}GNOME 3${RESET} ~ desktop environment"
-  export DISPLAY=:0.0
-  #-- Gnome Extension - Dash Dock (the toolbar with all the icons)
-  gsettings set org.gnome.shell.extensions.dash-to-dock extend-height true      # Set dock to use the full height
-  gsettings set org.gnome.shell.extensions.dash-to-dock dock-position 'RIGHT'   # Set dock to the right
-  gsettings set org.gnome.shell.extensions.dash-to-dock dock-fixed true         # Set dock to be always visible
-  gsettings set org.gnome.shell favorite-apps \
-    "['gnome-terminal.desktop', 'org.gnome.Nautilus.desktop', 'kali-wireshark.desktop', 'firefox-esr.desktop', 'kali-burpsuite.desktop', 'kali-msfconsole.desktop', 'gedit.desktop']"
-  #-- Gnome Extension - Alternate-tab (So it doesn't group the same windows up)
-  GNOME_EXTENSIONS=$(gsettings get org.gnome.shell enabled-extensions | sed 's_^.\(.*\).$_\1_')
-  echo "${GNOME_EXTENSIONS}" | grep -q "alternate-tab@gnome-shell-extensions.gcampax.github.com" \
-    || gsettings set org.gnome.shell enabled-extensions "[${GNOME_EXTENSIONS}, 'alternate-tab@gnome-shell-extensions.gcampax.github.com']"
-  #-- Gnome Extension - Drive Menu (Show USB devices in tray)
-  GNOME_EXTENSIONS=$(gsettings get org.gnome.shell enabled-extensions | sed 's_^.\(.*\).$_\1_')
-  echo "${GNOME_EXTENSIONS}" | grep -q "drive-menu@gnome-shell-extensions.gcampax.github.com" \
-    || gsettings set org.gnome.shell enabled-extensions "[${GNOME_EXTENSIONS}, 'drive-menu@gnome-shell-extensions.gcampax.github.com']"
-  #--- Workspaces
-  gsettings set org.gnome.shell.overrides dynamic-workspaces false                         # Static
-  gsettings set org.gnome.desktop.wm.preferences num-workspaces 3                          # Increase workspaces count to 3
-  #--- Top bar
-  gsettings set org.gnome.desktop.interface clock-show-date true                           # Show date next to time in the top tool bar
-  #--- Keyboard short-cuts
-  (dmidecode | grep -iq virtual) && gsettings set org.gnome.mutter overlay-key "Super_R"   # Change 'super' key to right side (rather than left key), if in a VM
-  #--- Hide desktop icon
-  dconf write /org/gnome/nautilus/desktop/computer-icon-visible false
-else
-  echo -e "\n\n ${YELLOW}[i]${RESET} ${YELLOW}Skipping GNOME${RESET}..." 1>&2
-fi
-
-
-##### Install XFCE4
-(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Installing ${GREEN}XFCE4${RESET}${RESET} ~ desktop environment"
-export DISPLAY=:0.0
-apt -y -qq install curl \
-  || echo -e ' '${RED}'[!] Issue with apt install'${RESET} 1>&2
-apt -y -qq install xfce4 xfce4-mount-plugin xfce4-notifyd xfce4-places-plugin xfce4-power-manager \
-  || echo -e ' '${RED}'[!] Issue with apt install'${RESET} 1>&2
-(dmidecode | grep -iq virtual) \
-  || (apt -y -qq install xfce4-battery-plugin \
-    || echo -e ' '${RED}'[!] Issue with apt install'${RESET} 1>&2)
 #--- Configuring XFCE
 mkdir -p ~/.config/xfce4/panel/launcher-{2,4,5,6,7,8,9}/
 mkdir -p ~/.config/xfce4/xfconf/xfce-perchannel-xml/
@@ -711,93 +614,6 @@ rm -f ~/.cache/sessions/*
 update-alternatives --set x-session-manager /usr/bin/xfce4-session   #update-alternatives --config x-window-manager   #echo "xfce4-session" > ~/.xsession
 
 
-##### Cosmetics (themes & wallpapers)
-(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) ${GREEN}Cosmetics${RESET}${RESET} ~ Giving it a personal touch"
-export DISPLAY=:0.0
-#--- axiom / axiomd (May 18 2010) XFCE4 theme ~ http://xfce-look.org/content/show.php/axiom+xfwm?content=90145
-mkdir -p ~/.themes/
-timeout 300 curl --progress -k -L -f "https://dl.opendesktop.org/api/files/download/id/1461767736/90145-axiom.tar.gz" > /tmp/axiom.tar.gz \
-  || echo -e ' '${RED}'[!]'${RESET}" Issue downloading axiom.tar.gz" 1>&2    #***!!! hardcoded path!
-tar -zxf /tmp/axiom.tar.gz -C ~/.themes/
-xfconf-query -n -c xsettings -p /Net/ThemeName -s "axiomd"
-xfconf-query -n -c xsettings -p /Net/IconThemeName -s "Vibrancy-Kali-Dark"
-#--- Get new desktop wallpaper      (All are #***!!! hardcoded paths!)
-mkdir -p /usr/share/wallpapers/
-echo -n '[1/10]'; timeout 300 curl --progress -k -L -f "https://www.kali.org/images/wallpapers-01/kali-wp-june-2014_1920x1080_A.png" > /usr/share/wallpapers/kali_blue_3d_a.png \
-  || echo -e ' '${RED}'[!]'${RESET}" Issue downloading kali_blue_3d_a.png" 1>&2
-echo -n '[2/10]'; timeout 300 curl --progress -k -L -f "https://www.kali.org/images/wallpapers-01/kali-wp-june-2014_1920x1080_B.png" > /usr/share/wallpapers/kali_blue_3d_b.png \
-  || echo -e ' '${RED}'[!]'${RESET}" Issue downloading kali_blue_3d_b.png" 1>&2
-echo -n '[3/10]'; timeout 300 curl --progress -k -L -f "https://www.kali.org/images/wallpapers-01/kali-wp-june-2014_1920x1080_G.png" > /usr/share/wallpapers/kali_black_honeycomb.png \
-  || echo -e ' '${RED}'[!]'${RESET}" Issue downloading kali_black_honeycomb.png" 1>&2
-echo -n '[4/10]'; timeout 300 curl --progress -k -L -f "https://lh5.googleusercontent.com/-CW1-qRVBiqc/U7ARd2T9LCI/AAAAAAAAAGw/oantfR6owSg/w1920-h1080/vzex.png" > /usr/share/wallpapers/kali_blue_splat.png \
-  || echo -e ' '${RED}'[!]'${RESET}" Issue downloading kali_blue_splat.png" 1>&2
-echo -n '[5/10]'; timeout 300 curl --progress -k -L -f "http://wallpaperstock.net/kali-linux_wallpapers_39530_1920x1080.jpg" > /usr/share/wallpapers/kali-linux_wallpapers_39530.png \
-  || echo -e ' '${RED}'[!]'${RESET}" Issue downloading kali-linux_wallpapers_39530.png" 1>&2
-echo -n '[6/10]'; timeout 300 curl --progress -k -L -f "http://em3rgency.com/wp-content/uploads/2012/12/Kali-Linux-faded-no-Dragon-small-text.png" > /usr/share/wallpapers/kali_black_clean.png \
-  || echo -e ' '${RED}'[!]'${RESET}" Issue downloading kali_black_clean.png" 1>&2
-#echo -n '[7/10]'; timeout 300 curl --progress -k -L -f "http://www.hdwallpapers.im/download/kali_linux-wallpaper.jpg" > /usr/share/wallpapers/kali_black_stripes.jpg \
-#  || echo -e ' '${RED}'[!]'${RESET}" Issue downloading kali_black_stripes.jpg" 1>&2
-echo -n '[8/10]'; timeout 300 curl --progress -k -L -f "http://fc01.deviantart.net/fs71/f/2011/118/e/3/bt___edb_wallpaper_by_xxdigipxx-d3f4nxv.png" > /usr/share/wallpapers/kali_bt_edb.jpg \
-  || echo -e ' '${RED}'[!]'${RESET}" Issue downloading kali_bt_edb.jpg" 1>&2
-echo -n '[9/10]'; timeout 300 curl --progress -k -L -f "http://pre07.deviantart.net/58d1/th/pre/i/2015/223/4/8/kali_2_0_alternate_wallpaper_by_xxdigipxx-d95800s.png" > /usr/share/wallpapers/kali_2_0_alternate_wallpaper.png \
-  || echo -e ' '${RED}'[!]'${RESET}" Issue downloading kali_2_0_alternate_wallpaper.png" 1>&2
-echo -n '[10/10]'; timeout 300 curl --progress -k -L -f "http://pre01.deviantart.net/4210/th/pre/i/2015/195/3/d/kali_2_0__personal__wp_by_xxdigipxx-d91c8dq.png" > /usr/share/wallpapers/kali_2_0_personal.png \
-  || echo -e ' '${RED}'[!]'${RESET}" Issue downloading kali_2_0_personal.png" 1>&2
-_TMP="$(find /usr/share/wallpapers/ -maxdepth 1 -type f -name 'kali_*' | xargs -n1 file | grep -i 'HTML\|empty' | cut -d ':' -f1)"
-for FILE in $(echo ${_TMP}); do rm -f "${FILE}"; done
-#--- Kali 1 (Wallpaper)
-[ -e "/usr/share/wallpapers/kali_default-1440x900.jpg" ] \
-  && ln -sf /usr/share/wallpapers/kali/contents/images/1440x900.png /usr/share/wallpapers/kali_default-1440x900.jpg
-#--- Kali 2 (Login)
-[ -e "/usr/share/gnome-shell/theme/KaliLogin.png" ] \
-  && cp -f /usr/share/gnome-shell/theme/KaliLogin.png /usr/share/wallpapers/KaliLogin2.0-login.jpg
-#--- Kali 2 & Rolling (Wallpaper)
-[ -e "/usr/share/images/desktop-base/kali-wallpaper_1920x1080.png" ] \
-  && ln -sf /usr/share/images/desktop-base/kali-wallpaper_1920x1080.png /usr/share/wallpapers/kali_default2.0-1920x1080.jpg
-#--- New wallpaper & add to startup (so its random each login)
-mkdir -p /usr/local/bin/
-file=/usr/local/bin/rand-wallpaper; [ -e "${file}" ] && cp -n $file{,.bkup}
-cat <<EOF > "${file}" \
-  || echo -e ' '${RED}'[!] Issue with writing file'${RESET} 1>&2
-#!/bin/bash
-
-wallpaper="\$(shuf -n1 -e \$(find /usr/share/wallpapers/ -maxdepth 1 -name 'kali_*'))"
-
-## XFCE - Desktop wallpaper
-/usr/bin/xfconf-query -n -c xfce4-desktop -p /backdrop/screen0/monitor0/image-show -t bool -s true
-/usr/bin/xfconf-query -n -c xfce4-desktop -p /backdrop/screen0/monitor0/image-path -t string -s "\${wallpaper}"
-/usr/bin/xfconf-query -n -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -t string -s "\${wallpaper}"
-
-## GNOME - Desktop wallpaper
-#[[ $(which gnome-shell) ]] \
-#  && dconf write /org/gnome/desktop/background/picture-uri "'file://\${wallpaper}'"
-
-## Change lock wallpaper (before swipe) - kali 2 & rolling
-/usr/bin/dconf write /org/gnome/desktop/screensaver/picture-uri "'file://\${wallpaper}'"
-
-## Change login wallpaper (after swipe) - kali 2
-#cp -f "\${wallpaper}" /usr/share/gnome-shell/theme/KaliLogin.png
-
-/usr/bin/xfdesktop --reload 2>/dev/null &
-EOF
-chmod -f 0500 "${file}"
-#--- Run now
-bash "${file}"
-#--- Add to startup
-mkdir -p ~/.config/autostart/
-file=~/.config/autostart/wallpaper.desktop; [ -e "${file}" ] && cp -n $file{,.bkup}
-cat <<EOF > "${file}" \
-  || echo -e ' '${RED}'[!] Issue with writing file'${RESET} 1>&2
-[Desktop Entry]
-Type=Application
-Exec=/usr/local/bin/rand-wallpaper
-Hidden=false
-NoDisplay=false
-X-GNOME-Autostart-enabled=true
-Name=wallpaper
-EOF
-
-
 ##### Configure file   Note: need to restart xserver for effect
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Configuring ${GREEN}file${RESET} (Nautilus/Thunar) ~ GUI file system navigation"
 #--- Settings
@@ -851,13 +667,6 @@ sed -i 's/LastShowHidden=.*/LastShowHidden=TRUE/' "${file}" 2>/dev/null \
   || echo -e "[Configuration]\nLastShowHidden=TRUE" > "${file}"
 
 
-##### Configure GNOME terminal   Note: need to restart xserver for effect
-(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Configuring GNOME ${GREEN}terminal${RESET} ~ CLI interface"
-gconftool-2 -t bool -s /apps/gnome-terminal/profiles/Default/scrollback_unlimited true
-gconftool-2 -t string -s /apps/gnome-terminal/profiles/Default/background_type transparent
-gconftool-2 -t string -s /apps/gnome-terminal/profiles/Default/background_darkness 0.85611499999999996
-
-
 ##### Configure bash - all users
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Configuring ${GREEN}bash${RESET} ~ CLI shell"
 file=/etc/bash.bashrc; [ -e "${file}" ] && cp -n $file{,.bkup}   #~/.bashrc
@@ -903,41 +712,6 @@ sed -i 's/.*force_color_prompt=.*/force_color_prompt=yes/' "${file}"
 #--- Apply new configs
 source "${file}" || source ~/.zshrc
 
-
-##### Install grc
-(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Installing ${GREEN}grc${RESET} ~ colours shell output"
-apt -y -qq install grc \
-  || echo -e ' '${RED}'[!] Issue with apt install'${RESET} 1>&2
-#--- Setup aliases
-file=~/.bash_aliases; [ -e "${file}" ] && cp -n $file{,.bkup}   #/etc/bash.bash_aliases
-([[ -e "${file}" && "$(tail -c 1 ${file})" != "" ]]) && echo >> "${file}"
-grep -q '^## grc diff alias' "${file}" 2>/dev/null \
-  || echo -e "## grc diff alias\nalias diff='$(which grc) $(which diff)'\n" >> "${file}"
-grep -q '^## grc dig alias' "${file}" 2>/dev/null \
-  || echo -e "## grc dig alias\nalias dig='$(which grc) $(which dig)'\n" >> "${file}"
-grep -q '^## grc gcc alias' "${file}" 2>/dev/null \
-  || echo -e "## grc gcc alias\nalias gcc='$(which grc) $(which gcc)'\n" >> "${file}"
-grep -q '^## grc ifconfig alias' "${file}" 2>/dev/null \
-  || echo -e "## grc ifconfig alias\nalias ifconfig='$(which grc) $(which ifconfig)'\n" >> "${file}"
-grep -q '^## grc mount alias' "${file}" 2>/dev/null \
-  || echo -e "## grc mount alias\nalias mount='$(which grc) $(which mount)'\n" >> "${file}"
-grep -q '^## grc netstat alias' "${file}" 2>/dev/null \
-  || echo -e "## grc netstat alias\nalias netstat='$(which grc) $(which netstat)'\n" >> "${file}"
-grep -q '^## grc ping alias' "${file}" 2>/dev/null \
-  || echo -e "## grc ping alias\nalias ping='$(which grc) $(which ping)'\n" >> "${file}"
-grep -q '^## grc ps alias' "${file}" 2>/dev/null \
-  || echo -e "## grc ps alias\nalias ps='$(which grc) $(which ps)'\n" >> "${file}"
-grep -q '^## grc tail alias' "${file}" 2>/dev/null \
-  || echo -e "## grc tail alias\nalias tail='$(which grc) $(which tail)'\n" >> "${file}"
-grep -q '^## grc traceroute alias' "${file}" 2>/dev/null \
-  || echo -e "## grc traceroute alias\nalias traceroute='$(which grc) $(which traceroute)'\n" >> "${file}"
-grep -q '^## grc wdiff alias' "${file}" 2>/dev/null \
-  || echo -e "## grc wdiff alias\nalias wdiff='$(which grc) $(which wdiff)'\n" >> "${file}"
-#configure  #esperanto  #ldap  #e  #cvs  #log  #mtr  #ls  #irclog  #mount2  #mount
-#--- Apply new aliases
-source "${file}" || source ~/.zshrc
-
-
 ##### Install bash completion - all users
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Installing ${GREEN}bash completion${RESET} ~ tab complete CLI commands"
 apt -y -qq install bash-completion \
@@ -971,8 +745,6 @@ grep -q '^alias tmux' "${file}" 2>/dev/null \
   || echo -e '## tmux\nalias tmux="tmux attach || tmux new"\n' >> "${file}"    #alias tmux="tmux attach -t $HOST || tmux new -s $HOST"
 grep -q '^alias axel' "${file}" 2>/dev/null \
   || echo -e '## axel\nalias axel="axel -a"\n' >> "${file}"
-grep -q '^alias screen' "${file}" 2>/dev/null \
-  || echo -e '## screen\nalias screen="screen -xRR"\n' >> "${file}"
 #--- Add in ours (shortcuts)
 grep -q '^## Checksums' "${file}" 2>/dev/null \
   || echo -e '## Checksums\nalias sha1="openssl sha1"\nalias md5="openssl md5"\n' >> "${file}"
@@ -1031,21 +803,10 @@ grep -q '^## HDD size' "${file}" 2>/dev/null \
 grep -q '^## Listing' "${file}" 2>/dev/null \
   || echo -e '### Listing\nalias ll="ls -l --block-size=1 --color=auto"\n' >> "${file}"
 #--- Add in tools
-grep -q '^## nmap' "${file}" 2>/dev/null \
-  || echo -e '## nmap\nalias nmap="nmap --reason --open --stats-every 3m --max-retries 1 --max-scan-delay 20 --defeat-rst-ratelimit"\n' >> "${file}"
 grep -q '^## aircrack-ng' "${file}" 2>/dev/null \
   || echo -e '## aircrack-ng\nalias aircrack-ng="aircrack-ng -z"\n' >> "${file}"
 grep -q '^## airodump-ng' "${file}" 2>/dev/null \
   || echo -e '## airodump-ng \nalias airodump-ng="airodump-ng --manufacturer --wps --uptime"\n' >> "${file}"
-grep -q '^## metasploit' "${file}" 2>/dev/null \
-  || (echo -e '## metasploit\nalias msfc="systemctl start postgresql; msfdb start; msfconsole -q \"\$@\""' >> "${file}" \
-    && echo -e 'alias msfconsole="systemctl start postgresql; msfdb start; msfconsole \"\$@\""\n' >> "${file}" )
-[ "${openVAS}" != "false" ] \
-  && (grep -q '^## openvas' "${file}" 2>/dev/null \
-    || echo -e '## openvas\nalias openvas="openvas-stop; openvas-start; sleep 3s; xdg-open https://127.0.0.1:9392/ >/dev/null 2>&1"\n' >> "${file}")
-grep -q '^## mana-toolkit' "${file}" 2>/dev/null \
-  || (echo -e '## mana-toolkit\nalias mana-toolkit-start="a2ensite 000-mana-toolkit;a2dissite 000-default; systemctl restart apache2"' >> "${file}" \
-    && echo -e 'alias mana-toolkit-stop="a2dissite 000-mana-toolkit; a2ensite 000-default; systemctl restart apache2"\n' >> "${file}" )
 grep -q '^## ssh' "${file}" 2>/dev/null \
   || echo -e '## ssh\nalias ssh-start="systemctl restart ssh"\nalias ssh-stop="systemctl stop ssh"\n' >> "${file}"
 grep -q '^## samba' "${file}" 2>/dev/null \
@@ -1115,8 +876,8 @@ sed -i 's_^TerminalEmulator=.*_TerminalEmulator=debian-x-terminal-emulator_' "${
 
 ##### Configure screen ~ if possible, use tmux instead!
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Configuring ${GREEN}screen${RESET} ~ multiplex virtual consoles"
-#apt -y -qq install screen \
-#  || echo -e ' '${RED}'[!] Issue with apt install'${RESET} 1>&2
+apt -y -qq install screen \
+  || echo -e ' '${RED}'[!] Issue with apt install'${RESET} 1>&2
 #--- Configure screen
 file=~/.screenrc; [ -e "${file}" ] && cp -n $file{,.bkup}
 if [[ -f "${file}" ]]; then
