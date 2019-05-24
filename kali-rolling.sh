@@ -888,6 +888,37 @@ else
 fi
 
 
+##### Configure Source Code Pro Font 
+(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Configuring ${GREEN}source code pro font${RESET} ~ The font being used for emacs"
+
+currentDir=$(pwd)
+cd /tmp
+
+wget https://github.com/adobe-fonts/source-code-pro/archive/2.030R-ro/1.050-it.zip 
+
+if [ $? -eq 0 ]; then
+    unzip 1.050-it.zip
+    cp source-code-pro-*-it/OTF/*.otf /usr/share/fonts
+    rm -rf source-code-pro*
+    rm 1.050-it.zip
+    cd $currentDir
+    fc-cache -f -v
+else
+    echo -e ' '${RED}'[!] Issue with wget for font install'${RESET} 1>2&
+
+#--- Custom spacemacs config
+cp ./dotfiles/emacs/.spacemacs ~/.spacemacs
+##### Configure emacs
+(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Configuring ${GREEN}emacs${RESET} ~ The far superior text editor (using spacemacs)"
+apt -y -qq install emacs \
+    || echo -e ' '${RED}'[!] Issue with apt install'${RESET} 1>&2
+#--- Configure emacs
+git clone https://github.com/sly12bnr/spacemacs ~/.emacs.d \
+    || echo -e ' '${RED}'[!] Issue with git clone'${RESET} 1>2&
+
+#--- Custom spacemacs config
+cp ./dotfiles/emacs/.spacemacs ~/.spacemacs
+
 ##### Install vim - all users
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Installing ${GREEN}vim${RESET} ~ CLI text editor"
 apt -y -qq install vim \
@@ -986,36 +1017,6 @@ sed -i 's/^.*extensions.https_everywhere._observatory.popup_shown.*/user_pref("e
   || echo 'user_pref("extensions.https_everywhere._observatory.popup_shown", true);' >> "${file}"
 sed -i 's/^.network.security.ports.banned.override/user_pref("network.security.ports.banned.override", "1-65455");' "${file}" 2>/dev/null \
   || echo 'user_pref("network.security.ports.banned.override", "1-65455");' >> "${file}"
-#--- Replace bookmarks (base: http://pentest-bookmarks.googlecode.com)
-file=$(find ~/.mozilla/firefox/*.default*/ -maxdepth 1 -type f -name 'bookmarks.html' -print -quit)
-[ -e "${file}" ] \
-  && cp -n $file{,.bkup}   #/etc/firefox-esr/profile/bookmarks.html
-#timeout 300 curl --progress -k -L -f "http://pentest-bookmarks.googlecode.com/files/bookmarksv1.5.html" > /tmp/bookmarks_new.html \
-#  || echo -e ' '${RED}'[!]'${RESET}" Issue downloading bookmarks_new.html" 1>&2      #***!!! hardcoded version! Need to manually check for updates
-#--- Configure bookmarks
-#awk '!a[$0]++' /tmp/bookmarks_new.html \
-#  | \egrep -v ">(Latest Headlines|Getting Started|Recently Bookmarked|Recent Tags|Mozilla Firefox|Help and Tutorials|Customize Firefox|Get Involved|About Us|Hacker Media|Bookmarks Toolbar|Most Visited)</" \
-#  | \egrep -v "^    </DL><p>" \
-#  | \egrep -v "^<DD>Add" > "${file}"
-sed -i 's#^</DL><p>#        </DL><p>\n    </DL><p>\n</DL><p>#' "${file}"                                          # Fix import issues from pentest-bookmarks...
-sed -i 's#^    <DL><p>#    <DL><p>\n    <DT><A HREF="http://127.0.0.1/">localhost</A>#' "${file}"                 # Add localhost to bookmark toolbar (before hackery folder)
-sed -i 's#^</DL><p>#    <DT><A HREF="https://127.0.0.1:8834/">Nessus</A>\n</DL><p>#' "${file}"                    # Add Nessus UI bookmark toolbar
-[ "${openVAS}" != "false" ] \
-  && sed -i 's#^</DL><p>#    <DT><A HREF="https://127.0.0.1:9392/">OpenVAS</A>\n</DL><p>#' "${file}"              # Add OpenVAS UI to bookmark toolbar
-sed -i 's#^</DL><p>#    <DT><A HREF="http://127.0.0.1:3000/ui/panel">BeEF</A>\n</DL><p>#' "${file}"               # Add BeEF UI to bookmark toolbar
-sed -i 's#^</DL><p>#    <DT><A HREF="http://127.0.0.1/rips/">RIPS</A>\n</DL><p>#' "${file}"                       # Add RIPs to bookmark toolbar
-sed -i 's#^</DL><p>#    <DT><A HREF="https://paulschou.com/tools/xlate/">XLATE</A>\n</DL><p>#' "${file}"          # Add XLATE to bookmark toolbar
-sed -i 's#^</DL><p>#    <DT><A HREF="https://hackvertor.co.uk/public">HackVertor</A>\n</DL><p>#' "${file}"        # Add HackVertor to bookmark toolbar
-sed -i 's#^</DL><p>#    <DT><A HREF="http://www.irongeek.com/skiddypad.php">SkiddyPad</A>\n</DL><p>#' "${file}"   # Add Skiddypad to bookmark toolbar
-sed -i 's#^</DL><p>#    <DT><A HREF="https://www.exploit-db.com/search/">Exploit-DB</A>\n</DL><p>#' "${file}"     # Add Exploit-DB to bookmark toolbar
-sed -i 's#^</DL><p>#    <DT><A HREF="http://offset-db.com/">Offset-DB</A>\n</DL><p>#' "${file}"                   # Add Offset-DB to bookmark toolbar
-sed -i 's#^</DL><p>#    <DT><A HREF="http://shell-storm.org/shellcode/">Shelcodes</A>\n</DL><p>#' "${file}"       # Add Shelcodes to bookmark toolbar
-sed -i 's#^</DL><p>#    <DT><A HREF="http://ropshell.com/">ROP Shell</A>\n</DL><p>#' "${file}"                    # Add ROP Shell to bookmark toolbar
-sed -i 's#^</DL><p>#    <DT><A HREF="https://ifconfig.io/">ifconfig</A>\n</DL><p>#' "${file}"                     # Add ifconfig.io to bookmark toolbar
-sed -i 's#<HR>#<DT><H3 ADD_DATE="1303667175" LAST_MODIFIED="1303667175" PERSONAL_TOOLBAR_FOLDER="true">Bookmarks Toolbar</H3>\n<DD>Add bookmarks to this folder to see them displayed on the Bookmarks Toolbar#' "${file}"
-#--- Clear bookmark cache
-find ~/.mozilla/firefox/*.default*/ -maxdepth 1 -mindepth 1 -type f -name "places.sqlite" -delete
-find ~/.mozilla/firefox/*.default*/bookmarkbackups/ -type f -delete
 #--- Set firefox for XFCE's default
 mkdir -p ~/.config/xfce4/
 file=~/.config/xfce4/helpers.rc; [ -e "${file}" ] && cp -n $file{,.bkup}    #exo-preferred-applications   #xdg-mime default
@@ -1396,21 +1397,6 @@ systemctl start postgresql
 msfdb start
 msfconsole -q -x 'version;db_status;sleep 310;exit'
 
-
-##### Configuring armitage
-(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Configuring ${GREEN}armitage${RESET} ~ GUI Metasploit UI"
-export MSF_DATABASE_CONFIG=/usr/share/metasploit-framework/config/database.yml
-for file in /etc/bash.bashrc ~/.zshrc; do     #~/.bashrc
-  [ ! -e "${file}" ] && continue
-  [ -e "${file}" ] && cp -n $file{,.bkup}
-  ([[ -e "${file}" && "$(tail -c 1 ${file})" != "" ]]) && echo >> "${file}"
-  grep -q 'MSF_DATABASE_CONFIG' "${file}" 2>/dev/null \
-    || echo -e 'MSF_DATABASE_CONFIG=/usr/share/metasploit-framework/config/database.yml\n' >> "${file}"
-done
-#--- Test
-#msfrpcd -U msf -P test -f -S -a 127.0.0.1
-
-
 ##### Install exe2hex
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Installing ${GREEN}exe2hex${RESET} ~ Inline file transfer"
 apt -y -qq install exe2hexbat \
@@ -1431,47 +1417,6 @@ apt -y -qq install wdiff wdiff-doc \
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Installing ${GREEN}vbindiff${RESET} ~ visually compare binary files"
 apt -y -qq install vbindiff \
   || echo -e ' '${RED}'[!] Issue with apt install'${RESET} 1>&2
-
-
-##### Install OpenVAS
-if [[ "${openVAS}" != "false" ]]; then
-  (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Installing ${GREEN}OpenVAS${RESET} ~ vulnerability scanner"
-  apt -y -qq install openvas \
-    || echo -e ' '${RED}'[!] Issue with apt install'${RESET} 1>&2
-  openvas-setup
-  #--- Bug fix (target credentials creation)
-  mkdir -p /var/lib/openvas/gnupg/
-  #--- Bug fix (keys)
-  curl --progress -k -L -f "http://www.openvas.org/OpenVAS_TI.asc" | gpg --import - \
-    || echo -e ' '${RED}'[!]'${RESET}" Issue downloading OpenVAS_TI.asc" 1>&2
-  #--- Make sure all services are correct
-  openvas-start
-  #--- User control
-  username="root"
-  password="toor"
-  (openvasmd --get-users | grep -q ^admin$) \
-    && echo -n 'admin user: ' \
-    && openvasmd --delete-user=admin
-  (openvasmd --get-users | grep -q "^${username}$") \
-    || (echo -n "${username} user: "; openvasmd --create-user="${username}"; openvasmd --user="${username}" --new-password="${password}" >/dev/null)
-  echo -e " ${YELLOW}[i]${RESET} OpenVAS username: ${username}"
-  echo -e " ${YELLOW}[i]${RESET} OpenVAS password: ${password}   ***${BOLD}CHANGE THIS ASAP${RESET}***"
-  echo -e " ${YELLOW}[i]${RESET} Run: # openvasmd --user=root --new-password='<NEW_PASSWORD>'"
-  sleep 3s
-  openvas-check-setup
-  #--- Remove from start up
-  systemctl disable openvas-manager
-  systemctl disable openvas-scanner
-  systemctl disable greenbone-security-assistant
-  #--- Setup alias
-  file=~/.bash_aliases; [ -e "${file}" ] && cp -n $file{,.bkup}   #/etc/bash.bash_aliases
-  grep -q '^## openvas' "${file}" 2>/dev/null \
-    || echo -e '## openvas\nalias openvas="openvas-stop; openvas-start; sleep 3s; xdg-open https://127.0.0.1:9392/ >/dev/null 2>&1"\n' >> "${file}"
-  source "${file}" || source ~/.zshrc
-else
-  echo -e "\n\n ${YELLOW}[i]${RESET} ${YELLOW}Skipping OpenVAS${RESET} (missing: '$0 ${BOLD}--openvas${RESET}')..." 1>&2
-fi
-
 
 ##### Install vFeed
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Installing ${GREEN}vFeed${RESET} ~ vulnerability database"
@@ -1585,17 +1530,16 @@ apt -y -qq install golang \
   || echo -e ' '${RED}'[!] Issue with apt install'${RESET} 1>&2
 ##### Setting up go directory structure
 mkdir -p ~/go/{src,bin}
+##### Installing Go tools
+go get golang.org/x/tools/cmd/...
+go get -u github.com/nsf/gocode
+go get -u github.com/dougm/goflymake
 file=/etc/bash.bashrc; [ -e "${file}" ] && cp -n $file{,.bkup}   #~/.bashrc
 grep -q GOPATH "${file}" \
     || echo 'export GOPATH=~/go' >> "${file}"
 grep -q GOBIN "${file}" \
     || echo 'export GOBIN=~/go/bin \n export PATH=$PATH:$GOBIN' >> "${file}"
 source "${file}" || source ~/.zshrc
-
-##### Install sparta
-(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Installing ${GREEN}sparta${RESET} ~ GUI automatic wrapper"
-apt -y -qq install sparta \
-  || echo -e ' '${RED}'[!] Issue with apt install'${RESET} 1>&2
 
 
 ##### Install wireshark
@@ -1608,32 +1552,6 @@ file=~/.wireshark/recent_common;   #[ -e "${file}" ] && cp -n $file{,.bkup}
 #--- Disable lua warning
 [ -e "/usr/share/wireshark/init.lua" ] \
   && mv -f /usr/share/wireshark/init.lua{,.disabled}
-
-
-##### Install silver searcher
-(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Installing ${GREEN}silver searcher${RESET} ~ code searching"
-apt -y -qq install silversearcher-ag \
-  || echo -e ' '${RED}'[!] Issue with apt install'${RESET} 1>&2
-
-##### Install graudit
-(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Installing ${GREEN}graudit${RESET} ~ source code auditing"
-apt -y -qq install git \
-  || echo -e ' '${RED}'[!] Issue with apt install'${RESET} 1>&2
-git clone -q -b master https://github.com/wireghoul/graudit.git /opt/graudit-git/ \
-  || echo -e ' '${RED}'[!] Issue when git cloning'${RESET} 1>&2
-pushd /opt/graudit-git/ >/dev/null
-git pull -q
-popd >/dev/null
-#--- Add to path
-mkdir -p /usr/local/bin/
-file=/usr/local/bin/graudit-git
-cat <<EOF > "${file}" \
-  || echo -e ' '${RED}'[!] Issue with writing file'${RESET} 1>&2
-#!/bin/bash
-
-cd /opt/graudit-git/ && bash graudit.sh "\$@"
-EOF
-chmod +x "${file}"
 
 ##### Install ipcalc & sipcalc
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Installing ${GREEN}ipcalc${RESET} & ${GREEN}sipcalc${RESET} ~ CLI subnet calculators"
@@ -1980,21 +1898,6 @@ echo -n '[2/2]'; timeout 300 curl --progress -k -L -f "http://www.coresecurity.c
   || echo -e ' '${RED}'[!]'${RESET}" Issue downloading pshtoolkit.rar" 1>&2  #***!!! hardcoded path!
 unzip -q -o -d /usr/share/windows-binaries/pstools/ /tmp/pstools.zip
 unrar x -y /tmp/pshtoolkit.rar /usr/share/windows-binaries/ >/dev/null
-
-##### Install Python (Windows via WINE)
-(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Installing ${GREEN}Python (Windows)${RESET}"
-echo -n '[1/2]'; timeout 300 curl --progress -k -L -f "https://www.python.org/ftp/python/2.7.9/python-2.7.9.msi" > /tmp/python.msi \
-  || echo -e ' '${RED}'[!]'${RESET}" Issue downloading python.msi" 1>&2       #***!!! hardcoded path!
-echo -n '[2/2]'; timeout 300 curl --progress -k -L -f "http://sourceforge.net/projects/pywin32/files/pywin32/Build%20219/pywin32-219.win32-py2.7.exe/download" > /tmp/pywin32.exe \
-  || echo -e ' '${RED}'[!]'${RESET}" Issue downloading pywin32.exe" 1>&2      #***!!! hardcoded path!
-wine msiexec /i /tmp/python.msi /qb 2>&1 | grep -v 'If something goes wrong, please rerun with\|for more detailed debugging output'
-pushd /tmp/ >/dev/null
-rm -rf "PLATLIB/" "SCRIPTS/"
-unzip -q -o /tmp/pywin32.exe
-cp -rf PLATLIB/* ~/.wine/drive_c/Python27/Lib/site-packages/
-cp -rf SCRIPTS/* ~/.wine/drive_c/Python27/Scripts/
-rm -rf "PLATLIB/" "SCRIPTS/"
-popd >/dev/null
 
 ##### Install veil framework
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Installing ${GREEN}veil-evasion framework${RESET} ~ bypassing anti-virus"
