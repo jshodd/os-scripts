@@ -884,7 +884,6 @@ if [[ -f "${file}" ]]; then
   echo -e ' '${RED}'[!]'${RESET}" ${file} detected. Skipping..." 1>&2
 else
   mkdir -p ~/.screen/{caps,logs}
-  cp ./dotfiles/screen/.screenrc "${file}"
 fi
 
 
@@ -894,30 +893,22 @@ fi
 currentDir=$(pwd)
 cd /tmp
 
-wget https://github.com/adobe-fonts/source-code-pro/archive/2.030R-ro/1.050-it.zip 
+wget https://github.com/adobe-fonts/source-code-pro/archive/2.030R-ro/1.050R-it.zip 
+unzip 1.050R-it.zip
+cp source-code-pro-*-it/OTF/*.otf /usr/share/fonts
+rm -rf source-code-pro*
+rm 1.050R-it.zip
+cd $currentDir
+fc-cache -f -v
 
-if [ $? -eq 0 ]; then
-    unzip 1.050-it.zip
-    cp source-code-pro-*-it/OTF/*.otf /usr/share/fonts
-    rm -rf source-code-pro*
-    rm 1.050-it.zip
-    cd $currentDir
-    fc-cache -f -v
-else
-    echo -e ' '${RED}'[!] Issue with wget for font install'${RESET} 1>2&
-
-#--- Custom spacemacs config
-cp ./dotfiles/emacs/.spacemacs ~/.spacemacs
 ##### Configure emacs
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Configuring ${GREEN}emacs${RESET} ~ The far superior text editor (using spacemacs)"
 apt -y -qq install emacs \
     || echo -e ' '${RED}'[!] Issue with apt install'${RESET} 1>&2
 #--- Configure emacs
-git clone https://github.com/sly12bnr/spacemacs ~/.emacs.d \
+git clone --single-branch --branch develop https://github.com/sly12bnr/spacemacs ~/.emacs.d \
     || echo -e ' '${RED}'[!] Issue with git clone'${RESET} 1>2&
 
-#--- Custom spacemacs config
-cp ./dotfiles/emacs/.spacemacs ~/.spacemacs
 
 ##### Install vim - all users
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Installing ${GREEN}vim${RESET} ~ CLI text editor"

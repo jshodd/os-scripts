@@ -14,3 +14,7 @@ Desktop.ini
 .Trashes
 Icon?
 ehthumbs.db
+
+/packer/packer_cache/
+/packer/output-vmware-iso/
+/iso/*
