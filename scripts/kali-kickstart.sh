@@ -2080,11 +2080,11 @@ apt -y -qq install openssh-server \
 rm -f /etc/ssh/ssh_host_*
 find ~/.ssh/ -type f ! -name authorized_keys -delete 2>/dev/null
 #--- Generate new keys
-ssh-keygen -b 4096 -t rsa1 -f /etc/ssh/ssh_host_key -P "" >/dev/null
-ssh-keygen -b 4096 -t rsa -f /etc/ssh/ssh_host_rsa_key -P "" >/dev/null
-ssh-keygen -b 1024 -t dsa -f /etc/ssh/ssh_host_dsa_key -P "" >/dev/null
-ssh-keygen -b 521 -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -P "" >/dev/null
-ssh-keygen -b 4096 -t rsa -f ~/.ssh/id_rsa -P "" >/dev/null
+ssh-keygen -b 4096 -t rsa1 -f /etc/ssh/ssh_host_key -P "" -o >/dev/null
+ssh-keygen -b 4096 -t rsa -f /etc/ssh/ssh_host_rsa_key -P "" -o >/dev/null
+ssh-keygen -b 1024 -t dsa -f /etc/ssh/ssh_host_dsa_key -P "" -o >/dev/null
+ssh-keygen -b 521 -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -P "" -o >/dev/null
+ssh-keygen -b 4096 -t rsa -f ~/.ssh/id_rsa -P "" -o >/dev/null
 #--- Change MOTD
 apt -y -qq install cowsay \
   || echo -e ' '${RED}'[!] Issue with apt install'${RESET} 1>&2
