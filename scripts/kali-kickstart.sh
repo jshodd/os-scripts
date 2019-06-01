@@ -906,9 +906,13 @@ fc-cache -f -v
 apt -y -qq install emacs \
     || echo -e ' '${RED}'[!] Issue with apt install'${RESET} 1>&2
 #--- Configure emacs
-git clone --single-branch --branch develop https://github.com/sly12bnr/spacemacs ~/.emacs.d \
+git clone --single-branch --branch develop https://github.com/syl20bnr/spacemacs ~/.emacs.d \
     || echo -e ' '${RED}'[!] Issue with git clone'${RESET} 1>2&
-
+ 
+##### Configure zeal
+(( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Configuring ${GREEN}zeal${RESET} ~ offline docsets (also used with emacs)"
+apt -y -qq install zeal \
+    || echo -e ' '${RED}'[!] Issue with apt install'${RESET} 1>&2
 
 ##### Install vim - all users
 (( STAGE++ )); echo -e "\n\n ${GREEN}[+]${RESET} (${STAGE}/${TOTAL}) Installing ${GREEN}vim${RESET} ~ CLI text editor"

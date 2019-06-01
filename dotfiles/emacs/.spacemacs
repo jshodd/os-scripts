@@ -43,6 +43,7 @@ values."
      terraform
      docker
      go
+	 dash
      rcirc
      helm
      auto-completion

@@ -15,6 +15,11 @@
       "destination": "~/.screenrc"
     },
     {
+      "type": "file",
+      "source": "../scripts/vmware_mount_folders.sh",
+      "destination": "/opt/scritps/vmware_mount_folders.sh"
+    },
+    {
       "type": "shell",
       "execute_command": "{{.Vars}} sudo -S -E bash '{{.Path}}' | tee ~/kickstart.output",
       "script": "../scripts/kali-kickstart.sh"
